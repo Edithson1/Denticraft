@@ -1,0 +1,378 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Caveat:wght@700&display=swap');
+
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --font-main: 'Outfit', sans-serif;
+  --font-handwriting: 'Caveat', cursive;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: linear-gradient(rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.52)), url('/dentist_office_bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text-main);
+  font-family: var(--font-main);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Dashboard Layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 20px;
+  gap: 20px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.app-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-logo-glow {
+  font-size: 28px;
+  filter: drop-shadow(0 0 10px var(--accent-cyan));
+}
+
+.dashboard-main {
+  display: grid;
+  grid-template-columns: 80px 420px 1fr;
+  gap: 24px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Floating Sidebar Pill Dock */
+.floating-dock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(35px) saturate(180%);
+  border-radius: 40px;
+  padding: 24px 12px;
+  align-self: start;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  margin-top: 10px;
+}
+
+.dock-item {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dock-item:hover {
+  transform: scale(1.15) translateY(-2px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dock-item.logo {
+  font-size: 24px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(16, 185, 129, 0.3));
+  border-color: rgba(6, 182, 212, 0.4);
+}
+
+.dock-item.status.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+.dock-item.status.active::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-green);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent-green);
+}
+
+/* Left panel (AI, Speech, Controls) */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Glassmorphic Card Style */
+.glass-card {
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(30px) saturate(180%);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(6, 182, 212, 0.25);
+  box-shadow: 0 30px 65px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ASCII Face Terminal Panel */
+.ascii-terminal {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #020617;
+  border: 1.5px solid #1e293b;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-header {
+  background: #0f172a;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.terminal-dot.red { background: var(--accent-red); }
+.terminal-dot.yellow { background: #f59e0b; }
+.terminal-dot.green { background: var(--accent-green); }
+
+.terminal-title {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 8px;
+  font-weight: bold;
+}
+
+.terminal-body {
+  padding: 20px;
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, #090d16 0%, #020408 100%);
+  position: relative;
+}
+
+.terminal-body::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 2;
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+.ascii-face-pre {
+  font-family: monospace;
+  font-size: 7.5px;
+  line-height: 8.5px;
+  letter-spacing: -0.9px;
+  font-weight: bold;
+  white-space: pre !important;
+  word-wrap: normal;
+  overflow: visible !important;
+  display: block;
+  user-select: none;
+  transition: all 0.4s ease;
+}
+
+/* Expression glowing states */
+.ascii-face-pre.idle { color: #38bdf8; text-shadow: 0 0 4px #0284c7; }
+.ascii-face-pre.listening { color: #10b981; text-shadow: 0 0 5px #059669; }
+.ascii-face-pre.thinking { color: #a855f7; text-shadow: 0 0 5px #7e22ce; }
+.ascii-face-pre.speaking { color: #f43f5e; text-shadow: 0 0 6px #be123c; }
+.ascii-face-pre.success { color: #22c55e; text-shadow: 0 0 8px #15803d; }
+.ascii-face-pre.confused { color: #f59e0b; text-shadow: 0 0 5px #b45309; }
+
+.terminal-footer {
+  background: #0f172a;
+  padding: 10px 14px;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: monospace;
+}
+
+.status-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+.status-value {
+  font-size: 11px;
+  font-weight: bold;
+}
+.status-value.idle { color: #38bdf8; }
+.status-value.listening { color: var(--accent-green); animation: pulse-status 1.5s infinite; }
+.status-value.thinking { color: #a855f7; }
+.status-value.speaking { color: #f43f5e; }
+.status-value.success { color: #22c55e; }
+.status-value.confused { color: #f59e0b; }
+
+/* Real-time audio waveform animation */
+.audio-wave-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 18px;
+}
+
+.audio-wave-container .bar {
+  width: 3px;
+  background: var(--accent-green);
+  border-radius: 1px;
+  transition: height 0.1s ease;
+}
+
+/* Handwritten Font for Clinical Document fields */
+.handwritten {
+  font-family: var(--font-handwriting);
+  font-size: 20px;
+  color: #1e3a8a; /* Clinical blue pen color */
+  padding-left: 8px;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  vertical-align: bottom;
+  transform: translateY(2px);
+}
+
+/* PDF layout and sheets scroll adjustments */
+.clinical-page {
+  font-family: 'Courier New', Courier, monospace;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  border-radius: 4px;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Microphone pulsating effect */
+@keyframes pulse-status {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.mic-btn.listening {
+  animation: pulse-red-glow 1.5s infinite alternate;
+}
+
+@keyframes pulse-red-glow {
+  from {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+  }
+  to {
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.9);
+    transform: scale(1.05);
+  }
+}
+
+/* Custom status dots for formal clinical look */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+.status-dot.red {
+  background: var(--accent-red);
+  box-shadow: 0 0 8px var(--accent-red);
+}
+.status-dot.green {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
+  animation: pulse-dot 1.5s infinite;
+}
+.status-dot.blue {
+  background: #38bdf8;
+  box-shadow: 0 0 8px #0284c7;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Spinner for the loading tooth */
+.spin-tooth {
+  animation: spin 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Hover effects for custom header buttons */
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
