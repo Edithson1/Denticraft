@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { 
-  MockConvexProvider, 
-  useConvexMutation, 
-  useConvexQuery 
-} from "./convexClient";
+import React, { useEffect, useRef, useState } from "react";
+import { API_URL, backend } from "./backendApi";
+import { BackendGuard } from "./BackendGuard";
+import { useBackendSession } from "./useBackendSession";
 import AsciiFace from "./components/AsciiFace";
 import VoiceController from "./components/VoiceController";
 import DocumentPreview from "./components/DocumentPreview";
@@ -73,33 +71,19 @@ const RefreshIcon = ({ size = 14, className = "" }) => (
 );
 
 function MainApp() {
-  const [sessionId, setSessionId] = useState(null);
   const [micStream, setMicStream] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const didInit = useRef(false);
 
-  // Convex/Mock hooks
-  const createSession = useConvexMutation("sessions:createSession");
-  const updateField = useConvexMutation("sessions:updateDocumentField");
-  const updateTooth = useConvexMutation("sessions:updateToothState");
-  const updateTreatment = useConvexMutation("sessions:updateTreatmentState");
-  const addProgress = useConvexMutation("sessions:addProgressRow");
-  const addConversation = useConvexMutation("sessions:addConversationEvent");
-  const updateFace = useConvexMutation("sessions:updateFaceState");
-
-  // Get active session data
-  const sessionData = useConvexQuery("sessions:getSessionData", { 
-    sessionId: sessionId || "" 
-  });
-
-  // Start new session on mount
-  useEffect(() => {
-    async function init() {
-      const newId = await createSession();
-      setSessionId(newId);
-      addNotification("Sistema listo. Abre el micrófono para dictar.", "info");
-    }
-    init();
-  }, []);
+  // Toda la comunicación con el backend pasa por la API HTTP
+  const {
+    sessionId,
+    sessionData,
+    error: initError,
+    isOnline,
+    startSession,
+    mutate,
+  } = useBackendSession();
 
   const addNotification = (text, type = "info") => {
     const id = Date.now();
@@ -108,6 +92,20 @@ function MainApp() {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 5000);
   };
+
+  const openSession = async (message) => {
+    const newId = await startSession();
+    if (newId) addNotification(message, "info");
+  };
+
+  // Abre una sesión al montar. El ref evita la doble ejecución de StrictMode,
+  // que contra un backend real crearía dos sesiones en la base de datos.
+  useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+    openSession("Sistema listo. Abre el micrófono para dictar.");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleEmailRequest = async (email) => {
     addNotification("Generando PDF base del historial clínico...", "info");
@@ -120,13 +118,39 @@ function MainApp() {
     }, 2500);
   };
 
+  if (initError) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0f172a", padding: "20px" }}>
+        <div className="glass-card" style={{ maxWidth: "560px", padding: "32px" }}>
+          <h2 style={{ color: "#f8fafc", marginBottom: "12px" }}>No se pudo abrir la sesión</h2>
+          <p style={{ color: "#94a3b8", fontSize: "14px", lineHeight: "1.7" }}>
+            Falló <code style={{ color: "#06b6d4" }}>POST {API_URL}/api/session</code>. Lo más
+            habitual es que el backend todavía no esté levantado: en el repositorio del backend
+            ejecuta <code style={{ color: "#06b6d4" }}>npx convex dev</code> y comprueba que{" "}
+            <code style={{ color: "#06b6d4" }}>VITE_API_URL</code> apunte a su HTTP Actions URL.
+          </p>
+          <pre style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "14px", marginTop: "16px", color: "#f87171", fontSize: "12px", whiteSpace: "pre-wrap" }}>
+            {initError}
+          </pre>
+          <button
+            type="button"
+            onClick={() => openSession("Nueva sesión iniciada.")}
+            style={{ marginTop: "18px", padding: "10px 18px", background: "#06b6d4", border: "none", color: "#0f172a", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!sessionId || !sessionData) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0f172a" }}>
         <div className="glass-card" style={{ textAlign: "center", padding: "40px" }}>
           <ToothIcon size={48} className="spin-tooth" style={{ color: "#06b6d4", marginBottom: "15px" }} />
           <h2>Inicializando DentisCraft AI Core...</h2>
-          <p style={{ color: "#94a3b8", marginTop: "8px" }}>Conectando base de datos reactiva</p>
+          <p style={{ color: "#94a3b8", marginTop: "8px" }}>Conectando con la API del backend</p>
         </div>
       </div>
     );
@@ -175,13 +199,9 @@ function MainApp() {
           <span style={{ fontSize: "12px", color: "#94a3b8" }}>
             ID Sesión: <strong style={{ color: "#06b6d4" }}>{sessionId.substring(0, 12)}...</strong>
           </span>
-          <button 
+          <button
             type="button"
-            onClick={async () => {
-              const newId = await createSession();
-              setSessionId(newId);
-              addNotification("Nueva sesión iniciada.", "info");
-            }}
+            onClick={() => openSession("Nueva sesión iniciada.")}
             style={{
               padding: "8px 16px",
               background: "rgba(255, 255, 255, 0.08)",
@@ -212,8 +232,11 @@ function MainApp() {
           <div className={`dock-item status ${micStream ? "active" : ""}`} title={micStream ? "Micrófono Activo" : "Micrófono Apagado"}>
             {micStream ? <MicIcon size={20} style={{ color: "#10b981" }} /> : <MicMuteIcon size={20} style={{ color: "#94a3b8" }} />}
           </div>
-          <div className="dock-item status active" title="Base de Datos Local Persistente">
-            <DbIcon size={20} style={{ color: "#10b981" }} />
+          <div
+            className={`dock-item status ${isOnline ? "active" : ""}`}
+            title={isOnline ? `API conectada (${API_URL})` : "Sin respuesta de la API..."}
+          >
+            <DbIcon size={20} style={{ color: isOnline ? "#10b981" : "#f59e0b" }} />
           </div>
           <div className={`dock-item status ${currentExpression === "success" ? "active" : ""}`} title="Ficha Completada">
             {currentExpression === "success" ? <CheckIcon size={20} style={{ color: "#10b981" }} /> : <DocIcon size={20} style={{ color: "#94a3b8" }} />}
@@ -234,12 +257,12 @@ function MainApp() {
             <VoiceController
               sessionId={sessionId}
               documentState={documentState}
-              onFieldUpdate={(field, val) => updateField({ sessionId, field, value: val })}
-              onToothUpdate={(tooth, surface, status) => updateTooth({ sessionId, tooth, surface, status })}
-              onTreatmentUpdate={(treatmentKey, checked) => updateTreatment({ sessionId, treatmentKey, checked })}
-              onAddProgressRow={(row) => addProgress({ sessionId, ...row })}
-              onAddConversationEvent={(sender, text) => addConversation({ sessionId, sender, text })}
-              onFaceStateUpdate={(expression, mouthOpen) => updateFace({ sessionId, expression, mouthOpen })}
+              onFieldUpdate={(field, val) => mutate(id => backend.updateField(id, field, val))}
+              onToothUpdate={(tooth, surface, status) => mutate(id => backend.updateTooth(id, tooth, surface, status))}
+              onTreatmentUpdate={(treatmentKey, checked) => mutate(id => backend.updateTreatment(id, treatmentKey, checked))}
+              onAddProgressRow={(row) => mutate(id => backend.addProgressRow(id, row))}
+              onAddConversationEvent={(sender, text) => mutate(id => backend.addConversationEvent(id, sender, text))}
+              onFaceStateUpdate={(expression, mouthOpen) => mutate(id => backend.updateFace(id, expression, mouthOpen))}
               onEmailRequest={handleEmailRequest}
               setMicStream={setMicStream}
             />
@@ -263,9 +286,9 @@ function MainApp() {
         <div className="glass-card" style={{ padding: "10px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <DocumentPreview
             documentState={documentState}
-            onToothUpdate={(tooth, surface, status) => updateTooth({ sessionId, tooth, surface, status })}
-            onTreatmentUpdate={(treatmentKey, checked) => updateTreatment({ sessionId, treatmentKey, checked })}
-            onAddProgressRow={(row) => addProgress({ sessionId, ...row })}
+            onToothUpdate={(tooth, surface, status) => mutate(id => backend.updateTooth(id, tooth, surface, status))}
+            onTreatmentUpdate={(treatmentKey, checked) => mutate(id => backend.updateTreatment(id, treatmentKey, checked))}
+            onAddProgressRow={(row) => mutate(id => backend.addProgressRow(id, row))}
           />
         </div>
       </main>
@@ -275,8 +298,8 @@ function MainApp() {
 
 export default function App() {
   return (
-    <MockConvexProvider>
+    <BackendGuard>
       <MainApp />
-    </MockConvexProvider>
+    </BackendGuard>
   );
 }
